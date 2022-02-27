@@ -4,6 +4,7 @@
       <div class="col-md-10 offset-md-1 col-xs-12">
 
         <app-list-errors [errors]="errors"></app-list-errors>
+        <span *ngIf="isInspiredError" class="error-messages">Can't get inspiration right now. Please try again later</span>
 
         <form [formGroup]="articleForm">
           <fieldset [disabled]="isSubmitting">
@@ -45,6 +46,10 @@
                 </span>
               </div>
             </fieldset>
+
+            <button class="btn btn-lg pull-xs-left btn-primary" type="button" (click)="getInspired()">
+              Get inspired
+            </button>
 
             <button class="btn btn-lg pull-xs-right btn-primary" type="button" (click)="submitForm()">
               Publish Article

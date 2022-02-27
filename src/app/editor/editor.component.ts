@@ -1,12 +1,20 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { FormBuilder, FormGroup, FormControl } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  Component,
+  OnInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef
+} from "@angular/core";
+import { FormBuilder, FormGroup, FormControl } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
+import { catchError, finalize, map, of, tap, throwError } from "rxjs";
 
-import { Article, ArticlesService } from '../core';
+import { Article, ArticlesService } from "../core";
+import { Inspiraton } from "../core/models/inspiration.model";
+import { InspirationService } from "../core/services/inspiration.service";
 
 @Component({
-  selector: 'app-editor-page',
-  templateUrl: './editor.component.html',
+  selector: "app-editor-page",
+  templateUrl: "./editor.component.html",
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditorComponent implements OnInit {
@@ -15,19 +23,21 @@ export class EditorComponent implements OnInit {
   tagField = new FormControl();
   errors: Object = {};
   isSubmitting = false;
+  isInspiredError = false;
 
   constructor(
     private articlesService: ArticlesService,
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private inspirationService: InspirationService
   ) {
     // use the FormBuilder to create a form group
     this.articleForm = this.fb.group({
-      title: '',
-      description: '',
-      body: ''
+      title: "",
+      description: "",
+      body: ""
     });
 
     // Initialized tagList as empty array
@@ -60,7 +70,7 @@ export class EditorComponent implements OnInit {
       this.article.tagList.push(tag);
     }
     // clear the input
-    this.tagField.reset('');
+    this.tagField.reset("");
   }
 
   removeTag(tagName: string) {
@@ -76,7 +86,7 @@ export class EditorComponent implements OnInit {
     // post the changes
     this.articlesService.save(this.article).subscribe(
       article => {
-        this.router.navigateByUrl('/article/' + article.slug);
+        this.router.navigateByUrl("/article/" + article.slug);
         this.cd.markForCheck();
       },
       err => {
@@ -89,5 +99,22 @@ export class EditorComponent implements OnInit {
 
   updateArticle(values: Object) {
     Object.assign(this.article, values);
+  }
+
+  getInspired() {
+    this.isInspiredError = false;
+    this.inspirationService
+      .getQuote()
+      .pipe(
+        map((response: Inspiraton) => {
+          this.articleForm.get("body").setValue(response.text);
+        }),
+        catchError(err => {
+          this.isInspiredError = true;
+          return of(err);
+        }),
+        finalize(() => this.cd.markForCheck())
+      )
+      .subscribe();
   }
 }

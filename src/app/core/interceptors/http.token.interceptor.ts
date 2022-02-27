@@ -1,8 +1,10 @@
-import { Injectable, Injector } from '@angular/core';
-import { HttpEvent, HttpInterceptor, HttpHandler, HttpRequest } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { HttpEvent, HttpInterceptor, HttpHandler, HttpRequest, HttpContextToken } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { JwtService } from '../services';
+
+export const SKIP_TOKEN = new HttpContextToken(() => false)
 
 @Injectable()
 export class HttpTokenInterceptor implements HttpInterceptor {
@@ -14,7 +16,7 @@ export class HttpTokenInterceptor implements HttpInterceptor {
       'Accept': 'application/json'
     };
 
-    const token = this.jwtService.getToken();
+    const token = !req.context.get(SKIP_TOKEN) ? this.jwtService.getToken() : null;
 
     if (token) {
       headersConfig['Authorization'] = `Token ${token}`;
